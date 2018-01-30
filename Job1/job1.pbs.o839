@@ -1,0 +1,49 @@
+Warning: no access to tty (Bad file descriptor).
+Thus no job control in this shell.
+Setting environment variables.
+Changing directory to /home/hp3/13MA20052/HPCJobs/Job1
+Running make.
+nvcc -I ./ kernel.cu host.cu -o Job1
+###############################################################
+Starting main at Wed Jan 31 02:20:54 IST 2018
+./Job1
+Preparing for process_kernel1.
+Allocating host memory...OK.
+Preparing device memory:
+Allcating device memory...OK.
+Copying to device memory...OK.
+CUDA kernel launch with (4,2,2) blocks of (32,32,1) threads.
+Kernel successfully returned from device.
+Copying output data from the CUDA device to the host memory...OK.
+Verifying results...OK [Test Passed].
+Freeing device memory...OK.
+Freeing host memory...OK.
+Job process_kernel1 finished.
+Preparing for process_kernel2.
+Allocating host memory...OK.
+Preparing device memory:
+Allcating device memory...OK.
+Copying to device memory...OK.
+CUDA kernel launch with (2,1,1) blocks of (8,8,16) threads.
+Kernel successfully returned from device.
+Copying output data from the CUDA device to the host memory...OK.
+Verifying results...OK [Test Passed].
+Freeing device memory...OK.
+Freeing host memory...OK.
+Job process_kernel2 finished.
+Preparing for process_kernel3.
+Allocating host memory...OK.
+Preparing device memory:
+Allcating device memory...OK.
+Copying to device memory...OK.
+CUDA kernel launch with (1,1,1) blocks of (128,4,1) threads.
+Kernel successfully returned from device.
+Copying output data from the CUDA device to the host memory...OK.
+Verifying results...OK [Test Passed].
+Freeing device memory...OK.
+Freeing host memory...OK.
+Job process_kernel3 finished.
+All jobs finished.
+Main finished at Wed Jan 31 02:20:57 IST 2018
+###############################################################
+rm -rf Job1
