@@ -1,7 +1,3 @@
-#include<stdio.h>
-#include<malloc.h>
-#include<cuda.h>
-#include<cuda_runtime.h>
 #include<job1.h>
 
 void prepHostMem(void **,int,size_t);

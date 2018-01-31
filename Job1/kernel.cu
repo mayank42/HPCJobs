@@ -1,4 +1,5 @@
-#include<cuda.h>
+//No headers
+//ncvv automatically imports the required
 __global__ void process_kernel1(float *input1,float *input2,float *output,int datasize){
 	int blockNum = blockIdx.z * (gridDim.x *gridDim.y) + blockIdx.y * gridDim.x + blockIdx.x;
 	int threadNum = threadIdx.z * (blockDim.x*blockDim.y) + threadIdx.y * (blockDim.x) + threadIdx.x;
