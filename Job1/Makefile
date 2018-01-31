@@ -1,6 +1,6 @@
 NVCC = nvcc
 
-helloCUDA: job1.h kernel.cu host.cu
+Job1: job1.h kernel.cu host.cu
 	$(NVCC) -I ./ kernel.cu host.cu -o Job1
 
 
