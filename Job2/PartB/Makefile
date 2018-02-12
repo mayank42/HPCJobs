@@ -1,7 +1,7 @@
 NVCC = nvcc
 
 Job2B: job2b.h kernel.cu host.cu  
-	$(NVCC) -I ./ kernel.cu host.cu -o Job2B
+	$(NVCC) -I/usr/include/cuda/ -I./ kernel.cu host.cu -o Job2B
 
       
 run:
