@@ -1,0 +1,22 @@
+#!/bin/csh
+#Torque PBS system
+#PBS -N job2
+#PBS -W group_list=hp3
+#PBS -q gpu
+#PBS -l walltime=00:05:00,mem=400mb,nodes=compute-0-0:gpus=1
+#PBS -V
+echo "Setting environment variables."
+set path = ($path /usr/local/cuda/bin)
+set LD_LIBRARY_PATH = ($LD_LIBRARY_PATH /usr/local/cuda/lib /usr/local/cuda/lib64)
+echo "Changing directory to $HOME/HPCJobs/Job2/PartB"
+cd ~/HPCJobs/Job2/PartB/
+echo "Running make."
+make
+printf "###############################################################\n"
+printf "Starting main at "
+date
+make run
+printf "Main finished at "
+date
+printf "###############################################################\n"
+make clean

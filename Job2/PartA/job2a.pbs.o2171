@@ -1,0 +1,22 @@
+Warning: no access to tty (Bad file descriptor).
+Thus no job control in this shell.
+Setting environment variables.
+Changing directory to /home/hp3/13MA20052/HPCJobs/Job2/PartA
+Running make.
+nvcc -I ./ kernel.cu host.cu -o Job2A
+###############################################################
+Starting main at Mon Feb 12 14:03:40 IST 2018
+./Job2A
+Orignal Matrix:
+1804289383 846930886 1681692777 
+1714636915 1957747793 424238335 
+719885386 1649760492 596516649 
+Swapping...Done.
+Swapped array:
+846930886 1957747793 1649760492 
+1804289383 1714636915 719885386 
+1681692777 424238335 596516649 
+Last err: 0
+Main finished at Mon Feb 12 14:03:40 IST 2018
+###############################################################
+rm -rf Job2A
