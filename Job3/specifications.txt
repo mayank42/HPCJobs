@@ -1,0 +1,26 @@
+Name   :   Tesla K40m
+Total global memory   :   11.1718 GB
+Shared memmory per block   :   48 KB
+32 bit registers per block   :   65536
+Warp size (in threads)   :   32
+Max pitch allowed by mem copy   :   2 GB
+Max threads per block   :   1024
+Max thread dimensions   :   (1024,1024,64)
+Max grid dimensions   :   (2147483647,65535,65535)
+Max const memory   :   64 KB
+Major compute capability   :   3
+Minor compute capability   :   5
+Clock frequency   :   745 MHz
+Alignment requirement for textures   :   512
+Device can concurrently copy memory and execute a kernel   :   1
+Number of multiprocessors on device   :   15
+Specified whether there is a run time limit on kernels   :   0
+Integrated   :   0
+Can map host memory   :   1
+Compute Mode   :   0
+Concurrent kernels   :   1
+ECC support   :   1
+PCI bus id   :   4
+PCI device id   :   0
+TCC Driver   :   0
+
