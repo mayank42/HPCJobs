@@ -13,11 +13,11 @@ int main(){
 	}
 	int * d_A;
 	err = cudaMalloc((void**)&d_A,size*size*sizeof(int));
-	//debug
+	debug(err,"Unable to allocate matrix on device")
 	//copy
 	for(a=0;a<size;a++){
 		err = cudaMemcpy(d_A+a*size,h_A[a],size*sizeof(int),cudaMemcpyHostToDevice);
-		//debug
+		debug(err,"Failed to copy to device")
 	}
 	printf("Orignal Matrix:\n");
 	fflush(stdout);
@@ -36,10 +36,10 @@ int main(){
 	printf("Done.\n");
 	fflush(stdout);
 	err = cudaGetLastError();
-	//debug
+	debug(err,"Last error in execution")
 	for(a=0;a<size;a++){
 		err = cudaMemcpy(h_R[a],d_A+a*size,size*sizeof(int),cudaMemcpyDeviceToHost);
-		//debug
+		debug(err,"Failed to copy back to host")
 	}
 	printf("Swapped array:\n");
 	for(a=0;a<size;a++){
@@ -56,9 +56,9 @@ int main(){
 	free(h_A);
 	free(h_R);
 	err = cudaFree(d_A);
-	//debug
+	debug(err,"Failed to free memory on device")
 	err = cudaDeviceReset();
-	//debug
+	debug(err,"Unable to reset device")
 	printf("Last err: %d\n",err);
 	return 0;
 }
