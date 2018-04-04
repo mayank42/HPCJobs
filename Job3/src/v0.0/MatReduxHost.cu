@@ -155,8 +155,8 @@ int main(int argc,char *argv[]){
 	if(sumTest(ans,comment,&serialTotal)){
 		ACK(OK);
 		cout<<setprecision(8);
-		POST("Cuda time",cudaTotal);
-		POST("Serial time",serialTotal*1000/CLOCKS_PER_SEC);
+		POST("Cuda time (ms)",cudaTotal);
+		POST("Serial time (ms)",serialTotal*1000/CLOCKS_PER_SEC);
 	}
 	else{
 		ACK(FAIL);
@@ -219,16 +219,16 @@ bool sumTest(vector<float> &ans,string &comm,double *tot){
 cudaError_t rowRedux(dim3 &grid,dim3 &block,float *d_imat,float *d_omat,size_t length,vector<float> &bans,double *tot){
 	float *arr[]={d_imat,d_omat};
 	int pos=0;
-	int sync_len=0;
+	int sync_len=SYNC_LEN;
 	cudaError_t err;
 	POST("Reducing on length",length);
-	while(length>SYNC_LIM){
+	while(sync_len){
 		length/=1024;
-		sync_len++;
+		sync_len--;
 	}
-	POST("Sync length",sync_len);
+	POST("Sync length",SYNC_LEN);
 	float ctime;
-	for(int a=0;a<sync_len;a++){
+	for(int a=0;a<SYNC_LEN;a++){
 		POST("Iteration number",a+1);
 		cudaEvent_t start,stop;
 		cudaEventCreate(&start);
@@ -240,7 +240,6 @@ cudaError_t rowRedux(dim3 &grid,dim3 &block,float *d_imat,float *d_omat,size_t l
 		cudaEventElapsedTime(&ctime, start, stop);
 		cudaEventDestroy(start);
 		cudaEventDestroy(stop);
-		cout<<"Here"<<ctime<<endl;
 		*tot=*tot+(double)ctime;
 		err = cudaGetLastError();
 		if(err!=cudaSuccess)return err;
@@ -255,7 +254,7 @@ cudaError_t getRowResult(float *d_omat,size_t length,vector<float> &bans){
 	if(err!=cudaSuccess)return err;
 	float a,b,c,d;
 	a=b=c=d=0.0;
-	for(int i=0;i<length;++i){
+	for(size_t i=0;i<length;++i){
 		a+=h_mat[MAT_SIZE*i];
 		b+=h_mat[MAT_SIZE*i+1];
 		c+=h_mat[MAT_SIZE*i+2];

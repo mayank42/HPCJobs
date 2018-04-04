@@ -26,7 +26,7 @@
 	} \
 }
 #define FILE_PATH "./data/mat.dat"
-#define SYNC_LIM 1024
+#define SYNC_LEN 1
 #define MAT_SIZE 4
 #define VOLUME 1.0
 #define BLOCKX 1024
