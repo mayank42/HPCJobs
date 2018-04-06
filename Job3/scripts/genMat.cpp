@@ -2,7 +2,7 @@
 #include<fstream>
 using namespace std;
 #define FILE_PATH "./data/mat.dat"
-#define LENGTH 1024*1024
+#define LENGTH 1500*1024
 #define FLAG 0
 #define NUM 1.0
 int main(){

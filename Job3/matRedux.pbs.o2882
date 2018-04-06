@@ -1,0 +1,47 @@
+Warning: no access to tty (Bad file descriptor).
+Thus no job control in this shell.
+Setting environment variables.
+Changing directory to /home/13MA20052/HPCJobs/Job3/
+Running make.
+nvcc -Xcompiler -fopenmp -Xcompiler -Wall -Werror cross-execution-space-call -I/usr/include/cuda/ -I./include ./src/v0.0/MatReduxKernel.cu -c -o ./build/matKernel.o
+g++ -Wall -Werror  -I./include -c ./src/v0.0/cpuRedux.cpp -o ./build/cpuRedux.o
+g++ -Wall -Werror -I./include -c ./src/v0.0/stackTimer.cpp -o ./build/stackTimer.o
+nvcc -Xcompiler -fopenmp -Xcompiler -Wall -Werror cross-execution-space-call -I/usr/include/cuda/ -I./include ./build/matKernel.o ./build/cpuRedux.o ./build/stackTimer.o ./src/v0.0/MatReduxHost.cu -o ./bin/matRedux
+###############################################################
+Starting main at Fri Apr  6 09:20:53 IST 2018
+./bin/matRedux
+Checking data file...[  OK  ]
+Number of 2x2 matrices:   1536000
+Alignment:   Row Major
+Batch volume percentage:   1
+Batch size:   1536000
+Block dimension:   1024
+Calibrating grid dimension...[  OK  ]
+Grid dimension:   1500
+Processing batch count:   1
+	Allocating memory on host...[  OK  ]
+	Reading data from file...[  OK  ]
+	Allocating memory on device...[  OK  ]
+	Allocating memory on device...[  OK  ]
+	Copying from host to device...[  OK  ]
+	Starting reduction:   
+		Reducing on length:   1536000
+		Sync length:   2
+		Iteration number:   1
+		Length lag < threshold. Adjusting with memset...[  OK  ]
+		Iteration number:   2
+		Length lag < threshold. Adjusting with memset...[  OK  ]
+		Iteration number:   3
+		Reduction status...[  OK  ]
+	Freeing host memory...[  OK  ]
+	Freeing device input memory...[  OK  ]
+	Freeing device output memory...[  OK  ]
+Adding results on host...[  Done  ]
+Testing...[  OK  ]
+Cuda time (ms):   1.1332981 ( + 4.3850238 memcpy )
+Serial time (ms):   0.01920202
+Resetting device...[  OK  ]
+Main finished at Fri Apr  6 09:20:56 IST 2018
+###############################################################
+rm -rf ./bin/*
+rm -rf ./build/*
