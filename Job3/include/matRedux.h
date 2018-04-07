@@ -45,10 +45,10 @@
 	cudaEventDestroy(stop); \
 }
 #define FILE_PATH "./data/mat.dat"
-#define SYNC_LEN 2
+#define SYNC_LEN 1024
 #define LAG_THRESH 2000
 #define MAT_SIZE 4
-#define VOLUME 1.0
+#define VOLUME 0.5
 #define BLOCKX 1024
 #define TAB0 ""
 #define TAB1 "\t"
@@ -57,8 +57,8 @@
 
 using namespace std;
 string tab="";
-bool sumTest(vector<float>&,string&,double*);
-cudaError_t rowRedux(dim3&,dim3&,float*,float*,size_t,vector<float>&,int,double*,double*);
-cudaError_t getRowResult(float*,size_t,vector<float>&,int,double*,double*);
-void addMat(vector<float>&,vector<float>&,int);
+bool sumTest(vector<double>&,string&,double*);
+cudaError_t rowRedux(dim3,dim3,double*,double*,size_t,vector<double>&,int,double*,double*);
+cudaError_t getRowResult(double*,size_t,vector<double>&,int,double*,double*);
+void addMat(vector<double>&,vector<double>&,int);
 #endif

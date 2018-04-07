@@ -45,7 +45,7 @@ int main(int argc,char *argv[]){
 	
 	size_t bstart = 0;
 	int count = 1;
-	vector<float> bans;
+	vector<double> bans;
 	cudaError_t err;
 	float ctime;
 	double diff;
@@ -58,9 +58,12 @@ int main(int argc,char *argv[]){
 
 		/*******************HOST MEMORY ALLOC*******************/
 		MSG("Allocating memory on host");
-		float *h_mat;
+		float *h_mat_f;
+		double *h_mat;
 		try{
-			h_mat = new float[MAT_SIZE*bsize];
+			h_mat_f = new float[MAT_SIZE*bsize];
+			h_mat = new double[MAT_SIZE*bsize];
+			
 		}catch(exception &e){
 			ACK(FAIL);
 			DEBUG(string("Allocation error. ")+e.what());
@@ -72,28 +75,30 @@ int main(int argc,char *argv[]){
 		/*******************DATA FILE READ*******************/
 		MSG("Reading data from file");
 		try{
-			if(bstart+bsize<length)
-				data.read(reinterpret_cast<char*>(h_mat),MAT_SIZE*bsize*sizeof(float));
+			if(bstart+bsize<=length)
+				data.read(reinterpret_cast<char*>(h_mat_f),MAT_SIZE*bsize*sizeof(float));
 			else{
-				data.read(reinterpret_cast<char*>(h_mat),MAT_SIZE*(length-bstart)*sizeof(float));
-				for(size_t loopvar = (length-bstart)*MAT_SIZE;loopvar<MAT_SIZE*bsize;++loopvar)h_mat[loopvar]=0.0;
+				data.read(reinterpret_cast<char*>(h_mat_f),MAT_SIZE*(length-bstart)*sizeof(float));
+				for(size_t loopvar = (length-bstart)*MAT_SIZE;loopvar<MAT_SIZE*bsize;++loopvar)h_mat_f[loopvar]=0.0f;
 			}
 		}catch(exception &e){
 			ACK(FAIL);
 			DEBUG(string("Data read failed. ")+e.what());
 		}
 		ACK(OK);
+		for(size_t a=0;a<MAT_SIZE*bsize;a++)h_mat[a]=h_mat_f[a];
+		delete[] h_mat_f;
 		/*******************DATA FILE READ*******************/
 
 		
 		/*******************DEVICE MEMORY ALLOC*******************/		
-		float *d_imat;
-		float *d_omat;
+		double *d_imat;
+		double *d_omat;
 		MSG("Allocating memory on device");
-		err = cudaMalloc(&d_imat,MAT_SIZE*bsize*sizeof(float));
+		err = cudaMalloc(&d_imat,MAT_SIZE*bsize*sizeof(double));
 		CDEBUG("Device memory allocation",err);
 		MSG("Allocating memory on device");
-		err = cudaMalloc(&d_omat,MAT_SIZE*(bsize/1024+1024)*sizeof(float));
+		err = cudaMalloc(&d_omat,MAT_SIZE*(bsize/1024+1024)*sizeof(double));
 		CDEBUG("Device memory allocation",err);
 		/*******************DEVICE MEMORY ALLOC*******************/
 
@@ -101,7 +106,7 @@ int main(int argc,char *argv[]){
 		/*******************DEVICE MEM COPY*******************/
 		MSG("Copying from host to device");
 		CEVENTSET(start,stop,ctime);
-		err = cudaMemcpy(d_imat,h_mat,MAT_SIZE*bsize*sizeof(float),cudaMemcpyHostToDevice);
+		err = cudaMemcpy(d_imat,h_mat,MAT_SIZE*bsize*sizeof(double),cudaMemcpyHostToDevice);
 		CEVENTGET(start,stop,ctime);
 		cudaMem+=ctime;
 		CDEBUG("Host to device memcpy",err);
@@ -140,11 +145,12 @@ int main(int argc,char *argv[]){
 		
 		bstart+=bsize;
 		count++;
+		tab = TAB0;
 	}
 	tab=TAB0;	
 
 	MSG("Adding results on host");
-	vector<float> ans(4,0.0);
+	vector<double> ans(4,0.0);
 	push_clock();
 	addMat(bans,ans,flag);
 	diff = push_clock();
@@ -177,7 +183,7 @@ int main(int argc,char *argv[]){
 	return 0;
 }
 
-bool sumTest(vector<float> &ans,string &comm,double *tot){
+bool sumTest(vector<double> &ans,string &comm,double *tot){
 	ifstream data(FILE_PATH,ios::binary);
 	if(!data.is_open()){
 		comm = "Unable to open data file.";
@@ -188,25 +194,37 @@ bool sumTest(vector<float> &ans,string &comm,double *tot){
 	double ctime;
 	data.read(reinterpret_cast<char*>(&length),sizeof(length));
 	data.read(reinterpret_cast<char*>(&flag),sizeof(flag));
-	vector<float> res(4,0.0);
+	vector<double> res(4,0.0);
+	double *acc = new double[4];
+	size_t readBuf = VOLUME*length;
+	size_t readCount = 0;
+	size_t reads;
 	if(!flag){
-		float *mat = new float[1024*MAT_SIZE];
-		int reads = 1024;
-		for(size_t start=0;start<length;start+=1024){
-			if(start+1024>length)reads = length-start;
-			data.read(reinterpret_cast<char*>(mat),reads*MAT_SIZE*sizeof(float));
-			push_clock();
-			for(int a=0;a<reads;a++){
-				res[0]+=mat[a*4];
-				res[1]+=mat[a*4+1];
-				res[2]+=mat[a*4+2];
-				res[3]+=mat[a*4+3];
-			}
+		float *mat_f = new float[MAT_SIZE*readBuf];
+		double *mat = new double[MAT_SIZE*readBuf];
+		while(readCount<length){
+			if(readCount+readBuf<=length)
+				reads = readBuf;
+			else
+				reads = length-readCount;
+			data.read(reinterpret_cast<char*>(mat_f),reads*MAT_SIZE*sizeof(float));
+			for(size_t a=0;a<MAT_SIZE*reads;++a)mat[a] = mat_f[a];
+			push_clock();	
+			lowRedux(mat,reads,acc,flag);		
+			res[0]+=acc[0];
+			res[1]+=acc[1];
+			res[2]+=acc[2];
+			res[3]+=acc[3];
 			ctime = push_clock();
 			*tot = *tot + ctime;
+			readCount+=reads;
 		}
+		delete[] mat_f;
+		delete[] mat;
 	}
 	clear_clock();
+	data.close();
+	delete[] acc;
 	if(ans[0]==res[0] && ans[1]==res[1] && ans[2]==res[2] && ans[3]==res[3]){
 		comm="Test successful.";
 		return true;
@@ -223,8 +241,8 @@ bool sumTest(vector<float> &ans,string &comm,double *tot){
 	}
 }
 
-cudaError_t rowRedux(dim3 &grid,dim3 &block,float *d_imat,float *d_omat,size_t length,vector<float> &bans,int flag,double *rtot,double *mtot){
-	float *arr[]={d_imat,d_omat};
+cudaError_t rowRedux(dim3 grid,dim3 block,double *d_imat,double *d_omat,size_t length,vector<double> &bans,int flag,double *rtot,double *mtot){
+	double *arr[]={d_imat,d_omat};
 	int pos=0;
 	cudaError_t err;
 	POST("Reducing on length",length);
@@ -241,17 +259,22 @@ cudaError_t rowRedux(dim3 &grid,dim3 &block,float *d_imat,float *d_omat,size_t l
 		CEVENTGET(start,stop,ctime);
 		*rtot=*rtot+(double)ctime;
 		err = cudaGetLastError();
-		if(err!=cudaSuccess)return err;
+		if(err!=cudaSuccess){
+			cout<<err<<endl;
+			cout<<length<<","<<grid.x<<endl;
+			cout<<a+1<<endl;
+			return err;
+		}
 		pos++;
 		length = grid.x;
-		lag = 1024-length%1024;
-		if(length<SYNC_LEN || (lag>LAG_THRESH  && (length-length%1024)<SYNC_LEN))break;
+		lag = (1024-length%1024)%1024;
+		if(length<=SYNC_LEN || (lag>LAG_THRESH  && (length-length%1024)<=SYNC_LEN))break;
 		else if(length%1024!=0){
 			if(lag<LAG_THRESH){
 				length = length+lag;
 				MSG("Length lag < threshold. Adjusting with memset");
 				CEVENTSET(start,stop,ctime);
-				err = cudaMemset(arr[pos%2]+MAT_SIZE*grid.x,0,MAT_SIZE*sizeof(float)*(lag));
+				err = cudaMemset(arr[pos%2]+MAT_SIZE*grid.x,0,MAT_SIZE*sizeof(double)*(lag));
 				CEVENTGET(start,stop,ctime);
 				*rtot=*rtot+(double)ctime;
 				CDEBUG("Memset during length lag adjustment",err);
@@ -260,11 +283,11 @@ cudaError_t rowRedux(dim3 &grid,dim3 &block,float *d_imat,float *d_omat,size_t l
 			else{
 				lag = length%1024;
 				length-=lag;
-				float *temp = new float[(lag+1)*MAT_SIZE];
-				float *temp_ans = new float[MAT_SIZE];
+				double *temp = new double[(lag+1)*MAT_SIZE];
+				double *temp_ans = new double[MAT_SIZE];
 				MSG("Length lag>=threshold. Adjusting with collapsing");
 				CEVENTSET(start,stop,ctime);
-				err = cudaMemcpy(temp,arr[pos%2]+MAT_SIZE*(length-1),MAT_SIZE*sizeof(float)*(lag+1),cudaMemcpyDeviceToHost);
+				err = cudaMemcpy(temp,arr[pos%2]+MAT_SIZE*(length-1),MAT_SIZE*sizeof(double)*(lag+1),cudaMemcpyDeviceToHost);
 				CEVENTGET(start,stop,ctime);
 				*mtot=*mtot+(double)ctime;
 				CDEBUG("Memcpy during length lag collapse",err);
@@ -274,7 +297,7 @@ cudaError_t rowRedux(dim3 &grid,dim3 &block,float *d_imat,float *d_omat,size_t l
 				*rtot = *rtot + diff;
 				MSG("Copying back after collapse");
 				CEVENTSET(start,stop,ctime);
-				err = cudaMemcpy(arr[pos%2]+MAT_SIZE*(length-1),temp_ans,MAT_SIZE*sizeof(float),cudaMemcpyHostToDevice);
+				err = cudaMemcpy(arr[pos%2]+MAT_SIZE*(length-1),temp_ans,MAT_SIZE*sizeof(double),cudaMemcpyHostToDevice);
 				CEVENTGET(start,stop,ctime);
 				*mtot=*mtot+(double)ctime;
 				CDEBUG("Memcpy after collapse",err);
@@ -289,18 +312,18 @@ cudaError_t rowRedux(dim3 &grid,dim3 &block,float *d_imat,float *d_omat,size_t l
 	clear_clock();
 	return getRowResult(arr[pos%2],length,bans,flag,rtot,mtot);
 }
-cudaError_t getRowResult(float *d_omat,size_t length,vector<float> &bans,int flag,double *rtot,double *mtot){
-	float *h_mat = new float[MAT_SIZE*length];
+cudaError_t getRowResult(double *d_omat,size_t length,vector<double> &bans,int flag,double *rtot,double *mtot){
+	double *h_mat = new double[MAT_SIZE*length];
 	cudaError_t err;
 	double diff;
 	cudaEvent_t start,stop;
 	float ctime=0;
 	CEVENTSET(start,stop,ctime);
-	err = cudaMemcpy(h_mat,d_omat,MAT_SIZE*length*sizeof(float),cudaMemcpyDeviceToHost);
+	err = cudaMemcpy(h_mat,d_omat,MAT_SIZE*length*sizeof(double),cudaMemcpyDeviceToHost);
 	CEVENTGET(start,stop,ctime);
 	*mtot=*mtot+(double)ctime;
 	if(err!=cudaSuccess)return err;
-	float *h_ans = new float[MAT_SIZE];
+	double *h_ans = new double[MAT_SIZE];
 	push_clock();
 	lowRedux(h_mat,length,h_ans,flag);
 	diff = push_clock();
@@ -314,7 +337,7 @@ cudaError_t getRowResult(float *d_omat,size_t length,vector<float> &bans,int fla
 	clear_clock();
 	return cudaSuccess;
 }
-void addMat(vector<float> &bans,vector<float> &ans,int flag){
+void addMat(vector<double> &bans,vector<double> &ans,int flag){
 	int l = bans.size()/4;
 	ans[0]=ans[1]=ans[2]=ans[3]=0.0;
 	if(!flag){
