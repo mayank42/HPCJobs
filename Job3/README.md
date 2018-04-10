@@ -19,4 +19,7 @@
    TODO: Graphs
    
 * Step 3: Memory Bank conflicts ( v0.2 )  
+   TODO: Graphs  
+   
+* Step 4: Load Halfing ( v0.3 )  
    TODO: Graphs
