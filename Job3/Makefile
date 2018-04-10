@@ -2,7 +2,7 @@ NVCC = nvcc
 CC = g++
 CUDACFLAGS = -Xcompiler -fopenmp -Xcompiler -Wall -Werror cross-execution-space-call
 CFLAGS = -Wall -Werror
-VERSION = v0.3
+VERSION = v0.4
 
 matRedux: ./src/$(VERSION)/MatReduxHost.cu ./build/matKernel.o ./build/cpuRedux.o ./build/stackTimer.o
 	$(NVCC) $(CUDACFLAGS) -I/usr/include/cuda/ -I./include ./build/matKernel.o ./build/cpuRedux.o ./build/stackTimer.o ./src/$(VERSION)/MatReduxHost.cu -o ./bin/matRedux
