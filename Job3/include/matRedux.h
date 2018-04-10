@@ -73,5 +73,7 @@ string tab="";
 bool sumTest(vector<double>&,string&,double*);
 cudaError_t rowRedux(dim3,dim3,double*,double*,size_t,vector<double>&,int,double*,double*);
 cudaError_t getRowResult(double*,size_t,vector<double>&,int,double*,double*);
+cudaError_t colRedux(dim3,dim3,double*,double*,size_t,vector<double>&,int,double*,double*);
+cudaError_t getColResult(double*,size_t,vector<double>&,int,double*,double*);
 void addMat(vector<double>&,vector<double>&,int);
 #endif
