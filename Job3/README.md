@@ -12,4 +12,11 @@
    
 ### The workflow  
 
-* Step1: The naive version ( v0.0 )
+* Step 1: The naive version ( v0.0 )  
+   TODO: Graphs  
+   
+* Step 2: Warp compression ( v0.1 )  
+   TODO: Graphs
+   
+* Step 3: Memory Bank conflicts ( v0.2 )  
+   TODO: Graphs
