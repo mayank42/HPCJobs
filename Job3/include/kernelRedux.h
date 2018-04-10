@@ -1,6 +1,7 @@
 #ifndef __KERNEL_REDUX_H__
 #define __KERNEL_REDUX_H__
 __global__ void row_kernel(double*,double*);
+__global__ void col_kernel(double*,double*,size_t);
 #define GRID_FACTOR 2
 #define REDOP(SDATA,TID,S) \
 { \
