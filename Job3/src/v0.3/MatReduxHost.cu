@@ -266,7 +266,7 @@ cudaError_t rowRedux(dim3 grid,dim3 block,double *d_imat,double *d_omat,size_t l
 			return err;
 		}
 		pos++;
-		length = grid.x;
+		length=grid.x/2;
 		lag = (1024-length%1024)%1024;
 		if(length<=SYNC_LEN || (lag>LAG_THRESH  && (length-length%1024)<=SYNC_LEN))break;
 		else if(length%1024!=0){
@@ -306,7 +306,7 @@ cudaError_t rowRedux(dim3 grid,dim3 block,double *d_imat,double *d_omat,size_t l
 				grid.x = length/1024;
 			}
 		}			
-		else grid.x/=1024;
+		else grid.x/=2048;
 		++a;
 	}
 	clear_clock();

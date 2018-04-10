@@ -11,6 +11,7 @@
 #include "stackTimer.h"
 #ifndef __MAT_REDUX_H__
 #define __MAT_REDUX_H__
+//#define WALLTIME
 #define OK "[  OK  ]"
 #define FAIL "[  FAIL  ]"
 #define DEBUG(A) { \
@@ -30,6 +31,7 @@
 		ACK(OK); \
 	} \
 }
+#ifndef WALLTIME
 #define CEVENTSET(START,STOP,CTIME) \
 { \
 	cudaEventCreate(&START); \
@@ -44,8 +46,19 @@
 	cudaEventDestroy(start); \
 	cudaEventDestroy(stop); \
 }
+#endif
+#ifdef WALLTIME
+#define CEVENTSET(START,STOP,CTIME) \
+{ \
+	push_clock(); \
+}
+#define CEVENTGET(START,STOP,CTIME) \
+{ \
+	CTIME = push_clock(); \
+}
+#endif
 #define FILE_PATH "./data/mat.dat"
-#define SYNC_LEN 1024
+#define SYNC_LEN 1024*256
 #define LAG_THRESH 2000
 #define MAT_SIZE 4
 #define VOLUME 0.5

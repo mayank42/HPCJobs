@@ -3,11 +3,20 @@ __global__ void  row_kernel(double *imat , double *omat){
 	__shared__ double  sdata [1024*4];
 	unsigned  int tid = 4*threadIdx.x;
 	unsigned  int i = 4*(blockIdx.x*blockDim.x*2 + threadIdx.x);
-	if(blockIdx.x*2>=gridDim.x)return;
-	sdata[tid] = imat[i]+imat[i+4*blockDim.x];
-	sdata[tid+1] = imat[i+4*blockDim.x+1];
-	sdata[tid+2] = imat[i+4*blockDim.x+2];
-	sdata[tid+3] = imat[i+4*blockDim.x+3];
+	if(blockIdx.x*2+1>=gridDim.x)return;
+	else if(blockIdx.x*2+3==gridDim.x){
+		sdata[tid] = imat[i] + imat[i+4*blockDim.x] + imat[i+8*blockDim.x];
+		sdata[tid+1] = imat[i+1] + imat[i+4*blockDim.x+1] + imat[i+8*blockDim.x+1];
+		sdata[tid+2] = imat[i+2] + imat[i+4*blockDim.x+2] + imat[i+8*blockDim.x+2];
+		sdata[tid+3] = imat[i+3] + imat[i+4*blockDim.x+3] + imat[i+8*blockDim.x+3];
+
+	}
+	else{	
+		sdata[tid] = imat[i]+imat[i+4*blockDim.x];
+		sdata[tid+1] = imat[i+1] + imat[i+4*blockDim.x+1];
+		sdata[tid+2] = imat[i+2] + imat[i+4*blockDim.x+2];
+		sdata[tid+3] = imat[i+3] + imat[i+4*blockDim.x+3];
+	}
 	__syncthreads();
 	for(unsigned  int s=2*blockDim.x;s>=4;s>>=1)
 	{
