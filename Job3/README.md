@@ -22,4 +22,7 @@
    TODO: Graphs  
    
 * Step 4: Load Halfing ( v0.3 )  
+   TODO: Graphs  
+   
+* Step 5: Reduction loop unrolling ( v0.4 )  
    TODO: Graphs
