@@ -10,75 +10,60 @@
    
 
 
-**Problem &amp; Solution Design**
+### Problem &amp; Solution Design
 
 The problem is to sum 2x2 size matrices using parallel reduction. Each of our matrix shall be represented as 4 floating point numbers. We shall solve the problem using two different storage designs:
 
 1. Row Major: We shall store each matrix consecutively. Below is a pictorial depiction:
+![alt text](https://github.com/mayank42/HPCJobs/blob/master/Job3/images/img1.png)
 
-1. Column Major: We shall first store first element of each matrix, then second and so on. Below is a pictorial depiction:
-
-
+1. Column Major: We shall first store first element of each matrix, then second and so on. Below is a pictorial depiction:  
+![alt text](https://github.com/mayank42/HPCJobs/blob/master/Job3/images/img2.png)
 
 In my solution we shall work on the number of matrices rather than on number of elements. Hence we shall depict length in our program as the number of matrices. Thereof each thread will be mapped to a matrix and shall be responsible for reducing its elements. Below is a pictorial depiction of work of one thread:
 
-In row major:
+In row major:  
+![alt text](https://github.com/mayank42/HPCJobs/blob/master/Job3/images/img3.png)
 
-In column major:
+In column major:  
+![alt text](https://github.com/mayank42/HPCJobs/blob/master/Job3/images/img4.png)
 
 Further to get away from edge case if else inside kernel I have made the program such that before passing data to kernel the length is divisible by 1024 which shall be our fixed block dimension. To do this either we pad with zeros or pre reduce some elements before passing. Decision to do what is controlled by a threshold parameter defined in the header file. Since GPU grid dimensions are limited we cannot just dump all the data on GPU. So I have included a volume parameter inside header that controls the volume of the data passed in one go. This parameter has to be set in accordance with the dimensional capabilities of the GPU. Additionally I have done reduction in a iterative manner, i.e. reducing again and again on the previous output until some limit after which the reduction is done by the CPU to get the final output. This limit is set based on the technical specification of the GPU.
 
-**GPU Specifications**
+### GPU Specifications
 
 The server GPU has following specifications that are relevant to our experimentation:  
 
-Name: **Tesla K40m**
 
-Compute capability: **3.5**
-
-Architecture: **Kepler**
-
-Number of SMs: **15**
-
-Total global memory: **11.17 G**
-
-Shared memory per block: **48 K**
-
-Cache memory per block: **16 K**
-
-ECC on: **Yes** (Peak bandwidth: 288 G with ECC off)
-
-Number of warp schedulers: **4 ( x2 )**
-
-ALU lanes for single precision FP arithmetic: **192**
-
-Max X dimension of grid: **2^31 -1**
-
-Max X dimension of block: **1024**
-
-Warp size: **32**
-
-Max threads/block: **1024**
-
-Max blocks/SM: **16**
-
-Max warps/SM: **64**
-
-Max threads/SM: **2048**
-
-Max shared memory/SM: **48 K**
-
-Shared memory banks: **32**
-
-Average instructions per warp - **40**
-
-Average instructions per clock  - **2 (issued)**
-
-Average clock latency per warp - 40/2 - **20**
-
-Occupancy requirement - 20 warps / SM - 20/64 - **31%**
-
-**Experiments**
+      Name: Tesla K40m  
+      Compute capability: 3.5  
+      Architecture: Kepler  
+      Number of SMs: 15  
+      Total global memory: 11.17 G  
+      Shared memory per block: 48 K  
+      Cache memory per block: 16 K  
+      ECC on: Yes (Peak bandwidth: 288 G with ECC off)  
+      Number of warp schedulers: 4 ( x2 )  
+      ALU lanes for single precision FP arithmetic: 192  
+      
+      
+      Max X dimension of grid: 2^31 -1  
+      Max X dimension of block: 1024  
+      Warp size: 32  
+      Max threads/block: 1024  
+      Max blocks/SM: 16  
+      Max warps/SM: 64  
+      Max threads/SM: 2048  
+      Max shared memory/SM: 48 K  
+      Shared memory banks: 32  
+      
+      
+      Average instructions per warp - 40  
+      Average instructions per clock  - 2 (issued)  
+      Average clock latency per warp - 40/2 - 20  
+      Occupancy requirement - 20 warps / SM - 20/64 - 31%  
+       
+### Experiments
 
 **Version 0: Naive solution**
 
@@ -142,7 +127,7 @@ Column Major:
    
         Memory bandwidth: 78.5 G
 
-**References:**
+### References
 
 [1] [https://en.wikipedia.org/wiki/CUDA#Version\_features\_and\_specifications](https://en.wikipedia.org/wiki/CUDA#Version_features_and_specifications)
 
