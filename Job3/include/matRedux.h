@@ -11,7 +11,7 @@
 #include "stackTimer.h"
 #ifndef __MAT_REDUX_H__
 #define __MAT_REDUX_H__
-#define WALLTIME
+//#define WALLTIME
 #define OK "[  OK  ]"
 #define FAIL "[  FAIL  ]"
 #define DEBUG(A) { \

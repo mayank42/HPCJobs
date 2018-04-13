@@ -1,5 +1,5 @@
 #include "kernelRedux.h"
-__global__ void  row_kernel(double *imat , double *omat){
+__global__ void  row_kernel(double *imat , double *omat,size_t grids){
 	__shared__ double  sdata [1024*4];
 	unsigned  int tid = 4*threadIdx.x;
 	unsigned  int i = 4*(blockIdx.x*blockDim.x + threadIdx.x);
@@ -9,9 +9,10 @@ __global__ void  row_kernel(double *imat , double *omat){
 	sdata[tid+3] = imat[i+3];
 	tid/=4;
 	__syncthreads();
+	unsigned int index;
 	for(unsigned  int s=4;s<4*blockDim.x;s<<=1)
 	{
-		unsigned int index = 2*s*tid;
+		index = 2*s*tid;
 		if (index<4*blockDim.x){
 			sdata[index]+= sdata[index+s];
 			sdata[index+1]+=sdata[index+1+s];

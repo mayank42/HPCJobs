@@ -90,7 +90,7 @@ int main(int argc,char *argv[]){
 		else
 			for(size_t a=0;a<bsize;++a){
 				for(int b=0;b<MAT_SIZE;++b){
-					h_mat[b*MAT_SIE+a] = h_mat_f[a*4+b];
+					h_mat[b*MAT_SIZE+a] = h_mat_f[a*4+b];
 				}
 			}
 		delete[] h_mat_f;
@@ -258,10 +258,11 @@ cudaError_t rowRedux(dim3 grid,dim3 block,double *d_imat,double *d_omat,size_t l
 	cudaEvent_t start,stop;
 	unsigned int lag;
 	int a=0;
+	size_t grids=0;
 	while(length>SYNC_LEN){
 		POST("Iteration number",a+1);
 		CEVENTSET(start,stop,ctime);
-		row_kernel<<<grid,block>>>(arr[pos%2],arr[(pos+1)%2]);
+		row_kernel<<<grid,block>>>(arr[pos%2],arr[(pos+1)%2],grids);
 		CEVENTGET(start,stop,ctime);
 		*rtot=*rtot+(double)ctime;
 		err = cudaGetLastError();

@@ -255,7 +255,7 @@ cudaError_t rowRedux(dim3 grid,dim3 block,double *d_imat,double *d_omat,size_t l
 	while(length>SYNC_LEN){
 		POST("Iteration number",a+1);
 		CEVENTSET(start,stop,ctime);
-		row_kernel<<<grid,block>>>(arr[pos%2],arr[(pos+1)%2]);
+		row_kernel<<<grid,block>>>(arr[pos%2],arr[(pos+1)%2],0);
 		CEVENTGET(start,stop,ctime);
 		*rtot=*rtot+(double)ctime;
 		err = cudaGetLastError();

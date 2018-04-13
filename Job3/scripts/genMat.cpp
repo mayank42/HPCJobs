@@ -4,7 +4,7 @@
 using namespace std;
 #define FILE_PATH "./data/mat.dat"
 #define LENGTH 1024*64*1024
-#define FLAG 0
+#define FLAG 0 
 #define NUM 1.0
 int main(int argc,char *argv[]){
 	size_t length = LENGTH;

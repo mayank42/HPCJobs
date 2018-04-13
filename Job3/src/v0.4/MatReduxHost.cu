@@ -86,7 +86,14 @@ int main(int argc,char *argv[]){
 			DEBUG(string("Data read failed. ")+e.what());
 		}
 		ACK(OK);
-		for(size_t a=0;a<MAT_SIZE*bsize;a++)h_mat[a]=h_mat_f[a];
+		if(!flag)
+			for(size_t a=0;a<MAT_SIZE*bsize;a++)h_mat[a]=h_mat_f[a];
+		else
+			for(size_t a=0;a<bsize;++a){
+				for(int b=0;b<MAT_SIZE;++b){
+					h_mat[b*MAT_SIZE+a] = h_mat_f[a*4+b];
+				}
+			}	
 		delete[] h_mat_f;
 		/*******************DATA FILE READ*******************/
 
@@ -117,8 +124,8 @@ int main(int argc,char *argv[]){
 		POST("Starting reduction","");
 		tab=TAB2;
 		if(flag){
-				//colRedux(grid,block,d_imat,d_omat,h_mat,bsize,bans);
-			err = cudaGetLastError();
+			err = colRedux(grid,block,d_imat,d_omat,bsize,bans,flag,&cudaRedux,&cudaMem);
+			MSG("Reduction status");
 			CDEBUG("Column kernel reduction",err);
 		}
 		else{
@@ -252,10 +259,13 @@ cudaError_t rowRedux(dim3 grid,dim3 block,double *d_imat,double *d_omat,size_t l
 	cudaEvent_t start,stop;
 	unsigned int lag;
 	int a=0;
+	size_t grids;
 	while(length>SYNC_LEN){
+		grids = grid.x;
+		grid.x/=2;
 		POST("Iteration number",a+1);
 		CEVENTSET(start,stop,ctime);
-		row_kernel<<<grid,block>>>(arr[pos%2],arr[(pos+1)%2]);
+		row_kernel<<<grid,block>>>(arr[pos%2],arr[(pos+1)%2],grids);
 		CEVENTGET(start,stop,ctime);
 		*rtot=*rtot+(double)ctime;
 		err = cudaGetLastError();
@@ -266,7 +276,7 @@ cudaError_t rowRedux(dim3 grid,dim3 block,double *d_imat,double *d_omat,size_t l
 			return err;
 		}
 		pos++;
-		length=grid.x/2;
+		length=grid.x;
 		lag = (1024-length%1024)%1024;
 		if(length<=SYNC_LEN || (lag>LAG_THRESH  && (length-length%1024)<=SYNC_LEN))break;
 		else if(length%1024!=0){
@@ -313,6 +323,101 @@ cudaError_t rowRedux(dim3 grid,dim3 block,double *d_imat,double *d_omat,size_t l
 	return getRowResult(arr[pos%2],length,bans,flag,rtot,mtot);
 }
 cudaError_t getRowResult(double *d_omat,size_t length,vector<double> &bans,int flag,double *rtot,double *mtot){
+	double *h_mat = new double[MAT_SIZE*length];
+	cudaError_t err;
+	double diff;
+	cudaEvent_t start,stop;
+	float ctime=0;
+	CEVENTSET(start,stop,ctime);
+	err = cudaMemcpy(h_mat,d_omat,MAT_SIZE*length*sizeof(double),cudaMemcpyDeviceToHost);
+	CEVENTGET(start,stop,ctime);
+	*mtot=*mtot+(double)ctime;
+	if(err!=cudaSuccess)return err;
+	double *h_ans = new double[MAT_SIZE];
+	push_clock();
+	lowRedux(h_mat,length,h_ans,flag);
+	diff = push_clock();
+	*rtot = *rtot + diff;
+	bans.push_back(h_ans[0]);
+	bans.push_back(h_ans[1]);
+	bans.push_back(h_ans[2]);
+	bans.push_back(h_ans[3]);
+	delete[] h_mat;
+	delete[] h_ans;
+	clear_clock();
+	return cudaSuccess;
+}
+cudaError_t colRedux(dim3 grid,dim3 block,double *d_imat,double *d_omat,size_t length,vector<double> &bans,int flag,double *rtot,double *mtot){
+	double *arr[]={d_imat,d_omat};
+	int pos=0;
+	cudaError_t err;
+	POST("Reducing on length",length);
+	POST("Sync length",SYNC_LEN);
+	float ctime;
+	double diff;
+	cudaEvent_t start,stop;
+	unsigned int lag;
+	int a=0;
+	while(length>SYNC_LEN){
+		POST("Iteration number",a+1);
+		CEVENTSET(start,stop,ctime);
+		col_kernel<<<grid,block>>>(arr[pos%2],arr[(pos+1)%2],length);
+		CEVENTGET(start,stop,ctime);
+		*rtot=*rtot+(double)ctime;
+		err = cudaGetLastError();
+		if(err!=cudaSuccess){
+			cout<<err<<endl;
+			cout<<length<<","<<grid.x<<endl;
+			cout<<a+1<<endl;
+			return err;
+		}
+		pos++;
+		length=grid.x/2;
+		if(length<=SYNC_LEN || (length-length%1024)<=SYNC_LEN)break;
+		else if(length%1024!=0){
+			/**if(lag<LAG_THRESH){
+				length = length+lag;
+				MSG("Length lag < threshold. Adjusting with memset");
+				CEVENTSET(start,stop,ctime);
+				err = cudaMemset(arr[pos%2]+MAT_SIZE*grid.x,0,MAT_SIZE*sizeof(double)*(lag));
+				CEVENTGET(start,stop,ctime);
+				*rtot=*rtot+(double)ctime;
+				CDEBUG("Memset during length lag adjustment",err);
+				grid.x = length/1024;
+			}
+			else{
+				lag = length%1024;
+				length-=lag;
+				double *temp = new double[(lag+1)*MAT_SIZE];
+				double *temp_ans = new double[MAT_SIZE];
+				MSG("Length lag>=threshold. Adjusting with collapsing");
+				CEVENTSET(start,stop,ctime);
+				err = cudaMemcpy(temp,arr[pos%2]+MAT_SIZE*(length-1),MAT_SIZE*sizeof(double)*(lag+1),cudaMemcpyDeviceToHost);
+				CEVENTGET(start,stop,ctime);
+				*mtot=*mtot+(double)ctime;
+				CDEBUG("Memcpy during length lag collapse",err);
+				push_clock();
+				lowRedux(temp,lag+1,temp_ans,flag);
+				diff = push_clock();
+				*rtot = *rtot + diff;
+				MSG("Copying back after collapse");
+				CEVENTSET(start,stop,ctime);
+				err = cudaMemcpy(arr[pos%2]+MAT_SIZE*(length-1),temp_ans,MAT_SIZE*sizeof(double),cudaMemcpyHostToDevice);
+				CEVENTGET(start,stop,ctime);
+				*mtot=*mtot+(double)ctime;
+				CDEBUG("Memcpy after collapse",err);
+				delete[] temp;
+				delete[] temp_ans;
+				grid.x = length/1024;
+			}*/
+		}			
+		else grid.x/=2048;
+		++a;
+	}
+	clear_clock();
+	return getColResult(arr[pos%2],length,bans,flag,rtot,mtot);
+}
+cudaError_t getColResult(double *d_omat,size_t length,vector<double> &bans,int flag,double *rtot,double *mtot){
 	double *h_mat = new double[MAT_SIZE*length];
 	cudaError_t err;
 	double diff;
